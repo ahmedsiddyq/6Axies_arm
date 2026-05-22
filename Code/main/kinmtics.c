@@ -1,21 +1,27 @@
-#define L0 1:2
-#define L1 232
-#define L2 188.5+59.5
-
 #include "kinmtics.h"
 
-void pos2theta(float x,float y,float z)
-{ // ?1 
-  theta1 = atan2(y, x);
+Theta pos2theta(float x, float y, float z)
+{
+    Theta t;
 
-  // ?3
-  theta3 = -acos(((x*x) +(y*y)+(z * z)-(L1*L1)-(L2*L2))/2.0*L1*L2));
+    float R = sqrtf(x*x + y*y + z*z);
 
-  // ?2
-  theta2 = asin(z/r) + atan2(L2 * sin(theta3), L1 + (L2*cos(theta3)));
+    // θ1
+    t.theta1 = atan2f(y, x);
+
+    float c3 = (x*x + y*y + z*z - L1*L1 - L2*L2) / (2.0f * L1 * L2);
+
+    // clamp safety to float errors
+    if (c3 > 1.0f) c3 = 1.0f;
+    if (c3 < -1.0f) c3 = -1.0f;
+
+    t.theta3 = -acosf(c3);
+
+    // θ2
+    t.theta2 =
+        asinf(z / R) +
+        atan2f(L2 * sinf(t.theta3),
+               L1 + L2 * cosf(t.theta3));
+
+    return t;
 }
-
-
-
-
- 
