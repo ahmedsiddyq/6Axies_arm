@@ -37,7 +37,6 @@ flotes pos2theta(flotes pos)
 void tehta_conversion()
 {
 	
-for(unsgined long i=0;i<dataSipos.d3e;i++)
- save(pos2theta(get(i), get(i),get(i)),i);
-
+for(unsgined long i=0;i<MAX_POSES;i++)
+ save(pos2theta(get(i)),i);
 }
