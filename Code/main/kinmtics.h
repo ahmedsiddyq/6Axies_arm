@@ -1,4 +1,3 @@
-
 #pragma once
 #include <math.h>
 #include "file_manger.h"

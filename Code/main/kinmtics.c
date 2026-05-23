@@ -1,7 +1,5 @@
 #include "kinmtics.h"
 
-
-
 flotes pos2theta(flotes pos)
 {
     flotes t;
@@ -39,7 +37,7 @@ flotes pos2theta(flotes pos)
 void tehta_conversion()
 {
 	
-for(i=0;i<dataSipos.d3e;i++)
+for(unsgined long i=0;i<dataSipos.d3e;i++)
  save(pos2theta(get(i), get(i),get(i)),i);
 
 }

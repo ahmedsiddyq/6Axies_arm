@@ -1,8 +1,4 @@
 #include "file_manger.h"
-#include "esp_heap_caps.h"
-#include <Arduino.h>
-
-#define MAX_POSES 1000                  // max number of poses that can be stored
 
 flotes* poseBuffer_pointer = NULL;      // pointer to the start of PSRAM block (no memory yet)
 unsigned long poseCount = 0;            // how many poses are currently saved
@@ -38,11 +34,7 @@ bool save(flotes data, unsigned long i)
         return false;
     }
 
-    poseBuffer_pointer[i] = data;       // write the full flotes struct into PSRAM at index i
-                                        // same as: poseBuffer_pointer[i].d1 = data.d1
-                                        //          poseBuffer_pointer[i].d2 = data.d2
-                                        //          poseBuffer_pointer[i].d3 = data.d3
-
+    poseBuffer_pointer[i] = data;      
     if (i >= poseCount) {
         poseCount = i + 1;              // update count so get() knows the valid range
     }                                   // example: save at i=5 → poseCount becomes 6
@@ -53,18 +45,17 @@ bool save(flotes data, unsigned long i)
 
 flotes get(unsigned long i)
 {
-    if (i >= poseCount) {               // prevent reading unwritten memory
+    if (i >= poseCount) {              
         Serial.println("❌ i out of range!");
-        return {0, 0, 0};               // return empty pose instead of garbage data
+        return {0, 0, 0};             
     }
-    return poseBuffer_pointer[i];       // read flotes struct from PSRAM at index i
+    return poseBuffer_pointer[i];       
 }
 
 
 void clearPoses() {
-    poseCount = 0;                      // reset counter → old data still in PSRAM but ignored
-}                                       // next save() will overwrite from index 0 again
-
+    poseCount = 0;                    
+}                                     
 
 void freePoseBuffer() {
     if (poseBuffer_pointer != NULL) {   // only free if memory was actually allocated
