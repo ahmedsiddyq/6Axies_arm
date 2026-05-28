@@ -2,10 +2,18 @@
 
 typedef struct
 {
-	min_theta
-	max_theta
-	dir
-}
+    uint16_t ratio;      //step per revluio
+    float theta_i;
+
+    float min_theta;     // use float if angles can be decimal
+    float max_theta;
+
+    bool dir; // 1 for postive
+} stepper;
+
+
+stepper m[num_axies];
+
 
 
 void stepper_init() {
@@ -38,16 +46,19 @@ void stepper_init() {
 
 
 
-void motion(float*,)
+void stepper_motion_all(flotes theata)
 {
-	theata_d=theata_desierd-theatai
-	theata_desierd=theatai
-	if(theata_d<0)
+	for(uint8_t i=1;i<num_axies;i++)
 	{
-     dir=
+	float theata_d=m[i].theta_i-m[i].theta_i;
+	m[i].theta_i=theata_desierd;
+	if(theata_d<0)
+	{																				
+	
 	}
+	
 	eles
-		
+	{
+	}	
+    }	
 }
-
-name 

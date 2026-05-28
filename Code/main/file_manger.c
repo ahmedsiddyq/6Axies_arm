@@ -1,66 +1,86 @@
-#include "file_manger.h"
+#include "file_manager.h"
 
-flotes* poseBuffer_pointer = NULL;      // pointer to the start of PSRAM block (no memory yet)
-unsigned long poseCount = 0;            // how many poses are currently saved
+// ── Private state ─────────────────────────────────────────────────────────────
+static flotes*        poseBuffer_pointer = NULL;  // PSRAM block start
+static unsigned long  poseCount          = 0;     // valid entries written so far
 
+// ── Init ──────────────────────────────────────────────────────────────────────
+void init_storage() {
 
-void init_storge()
-{
-    // allocate 1000 × 12 = 12000 bytes in PSRAM and cast raw address to flotes*
+    // Guard: PSRAM must be detected before allocating
+    if (!psramFound()) {
+        Serial.println("❌ No PSRAM detected! Check board config.");
+        return;
+    }
+
+    // Already initialised — don't double-allocate
+    if (poseBuffer_pointer != NULL) {
+        Serial.println("⚠️  Storage already initialised.");
+        return;
+    }
+
+    //  ps_malloc → allocates in PSRAM (not DRAM)
+    //  MAX_POSES × sizeof(flotes) = 1000 × 12 = 12 000 bytes
     poseBuffer_pointer = (flotes*) ps_malloc(MAX_POSES * sizeof(flotes));
-    //  sizeof(flotes)      → how many bytes is ONE pose struct = 12 bytes (3 floats × 4)
-    //  ps_malloc(12000)    → allocate 12000 bytes in PSRAM
-    //  (flotes*)           → CAST: tell C treat this address as pointer to flotes struct
-    //             ┌─────────────┬─────────────┬─────────────┬─────
-    //             │ d1 | d2 | d3│ d1 | d2 | d3│ d1 | d2 | d3│ ...
-    //             │  [0]        │  [1]         │  [2]        │
-    //             └─────────────┴─────────────┴─────────────┴─────
-    //              ← 12 bytes  →← 12 bytes   →← 12 bytes   →
 
     if (poseBuffer_pointer == NULL) {
-        // ps_malloc returns NULL if PSRAM is full or not enabled
         Serial.println("❌ PSRAM allocation failed!");
-    }
-    else {
-        Serial.printf("✅ Allocated %d bytes in PSRAM\n", MAX_POSES * sizeof(flotes));
+    } else {
+        memset(poseBuffer_pointer, 0, MAX_POSES * sizeof(flotes)); // zero-fill
+        Serial.printf("✅ Allocated %u bytes in PSRAM\n",
+                      (unsigned)(MAX_POSES * sizeof(flotes)));
     }
 }
 
+bool save(flotes data, unsigned long i) {
 
-bool save(flotes data, unsigned long i)
-{
-    if (i >= MAX_POSES) {               // prevent writing outside allocated memory
-        Serial.println("❌ i out of range!");
+    if (poseBuffer_pointer == NULL) {
+        Serial.println("❌ Buffer not initialised! Call init_storage() first.");
+        return false;
+    }
+    if (i >= MAX_POSES) {
+        Serial.printf("❌ Index %lu out of range (max %d)!\n", i, MAX_POSES - 1);
         return false;
     }
 
-    poseBuffer_pointer[i] = data;      
-    if (i >= poseCount) {
-        poseCount = i + 1;              // update count so get() knows the valid range
-    }                                   // example: save at i=5 → poseCount becomes 6
+    poseBuffer_pointer[i] = data;           // write struct directly into PSRAM slot
 
+    if (i >= poseCount) {
+        poseCount = i + 1;                  // extend valid range
+    }
     return true;
 }
 
+Flotes get(unsigned long i) {
 
-flotes get(unsigned long i)
-{
-    if (i >= poseCount) {              
-        Serial.println("❌ i out of range!");
-        return {0, 0, 0};             
+    if (poseBuffer_pointer == NULL || i >= poseCount) {
+        if (poseBuffer_pointer == NULL)
+            Serial.println("❌ Buffer not initialised!");
+        else
+            Serial.printf("❌ Index %lu out of range (count=%lu)!\n", i, poseCount);
+
+        return {0, 0, 0};        
     }
-    return poseBuffer_pointer[i];       
+
+    return poseBuffer_pointer[i]
 }
 
 
+// ── Clear (keeps PSRAM, resets logical count) ─────────────────────────────────
 void clearPoses() {
-    poseCount = 0;                    
-}                                     
+    poseCount = 0;
+    // optional: zero-fill PSRAM so stale data can't be accidentally read
+    if (poseBuffer_pointer != NULL) {
+        memset(poseBuffer_pointer, 0, MAX_POSES * sizeof(flotes));
+    }
+}
 
+// ── Free PSRAM block ──────────────────────────────────────────────────────────
 void freePoseBuffer() {
-    if (poseBuffer_pointer != NULL) {   // only free if memory was actually allocated
-        free(poseBuffer_pointer);       // release the 12000 bytes back to PSRAM heap
-        poseBuffer_pointer = NULL;      // set to NULL so no one can accidentally use freed memory
-        poseCount = 0;                  // reset count since buffer no longer exists
+    if (poseBuffer_pointer != NULL) {
+        free(poseBuffer_pointer);
+        poseBuffer_pointer = NULL;
+        poseCount          = 0;
+        Serial.println("🗑️  PSRAM buffer freed.");
     }
 }
