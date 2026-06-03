@@ -1,64 +1,44 @@
-#include"motoedriver.h"
+#include "motoedriver.h"
 
-typedef struct
+void stepper_init()
 {
-    uint16_t ratio;      //step per revluio
-    float theta_i;
+    engine.init();
 
-    float min_theta;     // use float if angles can be decimal
-    float max_theta;
+    for(int i = 0; i < num_axies; i++)
+    {
+        // Limit switch
+        pinMode(PIN_LIMIT[i], INPUT_PULLUP);
 
-    bool dir; // 1 for postive
-} stepper;
+        // Connect motor
+        m[i].motor = engine.stepperConnectToPin(PIN_STEP[i]);
+
+        // Configure motor
+        m[i].motor->setDirectionPin(PIN_DIR[i]);
+        m[i].motor->setEnablePin(PIN_ENABLE);
+        m[i].motor->setAutoEnable(true);
+
+        m[i].motor->setSpeedInHz(3000);
+        m[i].motor->setAcceleration(10000);
+
+        // default values
+        m[i].theta_i = 0;
+        m[i].ratio = 200;
+        m[i].dir = 1;
+    }
+}	
 
 
-stepper m[num_axies];
+void stepper_motion_all(flotes theta)
+{
+    for(uint8_t i = 0; i < num_axies; i++)
+    {
+        float theta_d = theta.d[i] - m[i].theta_i;
 
+        long steps = (theta_d / 360.0f) * m[i].ratio;
 
+        m[i].motor->move(steps);
 
-void stepper_init() {
-    // I2C (handled by Wire.begin, but shown for clarity)
-    // Wire.begin(PIN_SDA, PIN_SCL);
-
-    // Stepper DIR - Output
-    pinMode(PIN_DIR1,  OUTPUT);
-    pinMode(PIN_DIR2,  OUTPUT);
-    pinMode(PIN_DIR3,  OUTPUT);
-    pinMode(PIN_DIR4,  OUTPUT);
-    pinMode(PIN_DIR5,  OUTPUT);
-
-    // Stepper STEP - Output
-    pinMode(PIN_STEP1, OUTPUT);
-    pinMode(PIN_STEP2, OUTPUT);
-    pinMode(PIN_STEP3, OUTPUT);
-    pinMode(PIN_STEP4, OUTPUT);
-    pinMode(PIN_STEP5, OUTPUT);
-
-    // Limit Switches - Input with internal pull-up
-    pinMode(PIN_LIMIT1, INPUT_PULLUP);
-    pinMode(PIN_LIMIT2, INPUT_PULLUP);
-    pinMode(PIN_LIMIT3, INPUT_PULLUP);
-    pinMode(PIN_LIMIT4, INPUT_PULLUP);
-    pinMode(PIN_LIMIT5, INPUT_PULLUP);
+        m[i].theta_i = theta.d[i];
+    }
 }
-
-
-
-
-
-void stepper_motion_all(flotes theata)
-{
-	for(uint8_t i=1;i<num_axies;i++)
-	{
-	float theata_d=m[i].theta_i-m[i].theta_i;
-	m[i].theta_i=theata_desierd;
-	if(theata_d<0)
-	{																				
-	
-	}
-	
-	eles
-	{
-	}	
-    }	
 }
