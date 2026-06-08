@@ -11,7 +11,7 @@ void init_storage() {
     if (!psramFound()) {
         Serial.println("❌ No PSRAM detected! Check board config.");
         return;
-    }
+    }                                                                           
 
     // Already initialised — don't double-allocate
     if (poseBuffer_pointer != NULL) {
